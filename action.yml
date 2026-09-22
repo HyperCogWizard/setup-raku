@@ -5,6 +5,17 @@ inputs:
   raku-version:
     description: 'Version to use. Examples: 2020.06, 2020.05.1, latest'
     default: 'latest'
+  zef-modules:
+    description: 'Space or comma separated list of Raku modules to install with zef. Example: "Test::META Cro::Core"'
+    default: ''
+  enable-zef-cache:
+    description: 'Cache the zef module cache directory (~/.zef) between runs, keyed on META6.json'
+    default: 'false'
+outputs:
+  raku-version:
+    description: 'The resolved raku version that was installed. Example: 2020.06'
+  raku-path:
+    description: 'Path to the installed rakudo distribution'
 runs:
   using: 'node24'
   main: 'dist/index.js'

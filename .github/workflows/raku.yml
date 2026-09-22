@@ -13,15 +13,22 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
+          - macos-latest
         raku-version:
           - "2020.06"
           - "2020.05.1"
           - "2020.02.1"
           - "2020.01"
           - "2019.11"
+          - "latest"
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
       - uses: Raku/setup-raku@v1
         with:
           raku-version: ${{ matrix.raku-version }}
+      - name: smoke test
+        shell: bash
+        run: |
+          raku -e 'say "ok"'
+          zef --version

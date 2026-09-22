@@ -55,29 +55,58 @@ export async function getRelease(
   return releases.length > 0 ? releases[0] : null;
 }
 
+export function cacheVersion(release: Release): string {
+  return release.build_rev === null
+    ? release.ver
+    : `${release.ver}-0${release.build_rev}`;
+}
+
 export async function getRaku(
   version: string,
   platform: "win" | "macos" | "linux",
   arch: "x86_64" | "arm64",
-): Promise<void> {
+): Promise<{ ver: string; toolPath: string }> {
   const release = await getRelease(version, platform, arch);
   if (release === null) {
+    const available = (await getAllReleases())
+      .filter(
+        (r) =>
+          r.arch === arch &&
+          r.type === "archive" &&
+          r.backend === "moar" &&
+          r.platform === platform,
+      )
+      .map((r) => r.ver);
+    const versions = [...new Set(available)].sort().reverse().join(", ");
     throw new Error(
-      `Failed to find rakudo for version "${version}" and platform "${platform}"`,
+      `Failed to find rakudo for version "${version}", platform "${platform}" and arch "${arch}". Available versions: ${versions}`,
     );
   }
 
   const url = release.url;
   const ver = release.ver;
-  core.info(`Downloading rakudo ${ver} from ${url}`);
-  const downloadPath = await toolCache.downloadTool(url);
+  const versionWithBuildRev = cacheVersion(release);
 
-  core.info("Extracting archive");
+  const cached = toolCache.find("rakudo", versionWithBuildRev, arch);
+  if (cached) {
+    core.info(`Found rakudo ${versionWithBuildRev} in tool cache at ${cached}`);
+    addRakuToPath(cached);
+    return { ver, toolPath: cached };
+  }
+
   let extPath: string;
-  if (platform === "win") {
-    extPath = await toolCache.extractZip(downloadPath);
-  } else {
-    extPath = await toolCache.extractTar(downloadPath);
+  core.startGroup(`Downloading rakudo ${ver} from ${url}`);
+  try {
+    const downloadPath = await toolCache.downloadTool(url);
+
+    core.info("Extracting archive");
+    if (platform === "win") {
+      extPath = await toolCache.extractZip(downloadPath);
+    } else {
+      extPath = await toolCache.extractTar(downloadPath);
+    }
+  } finally {
+    core.endGroup();
   }
 
   let dirname = (url.split("/").pop() || "").replace(/\.(tar\.gz|zip)$/, "");
@@ -85,7 +114,6 @@ export async function getRaku(
     dirname = `rakudo-${ver}`;
   });
 
-  const versionWithBuildRev = `${ver}-0${release.build_rev}`;
   const toolPath = await toolCache.cacheDir(
     path.join(extPath, dirname),
     "rakudo",
@@ -94,6 +122,11 @@ export async function getRaku(
   );
   core.info(`Successfully installed rakudo into ${toolPath}`);
 
+  addRakuToPath(toolPath);
+  return { ver, toolPath };
+}
+
+function addRakuToPath(toolPath: string): void {
   core.addPath(path.join(toolPath, "bin"));
   core.addPath(path.join(toolPath, "share", "perl6", "site", "bin"));
 }

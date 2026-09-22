@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+* Validate the `raku-version` input and report available versions when no build matches
+* Reuse a previously installed rakudo from the tool cache instead of downloading again
+* Handle releases without a build revision when naming the cache directory
+* Add `zef-modules` input to install Raku modules with zef
+* Add `enable-zef-cache` input to cache the zef module cache between runs
+* Add `raku-version` and `raku-path` outputs
+* Verify that zef works after setup
+* Expand the dogfood workflow to macOS and the `latest` version, and smoke test `raku` and `zef`
+
 ## v1.14.0 - 2026-08-06
 
 * Update npm dependencies (https://github.com/Raku/setup-raku/pull/60, https://github.com/Raku/setup-raku/pull/61, https://github.com/Raku/setup-raku/pull/62)
