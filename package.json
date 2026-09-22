@@ -23,6 +23,7 @@
   "author": "Raku community",
   "license": "MIT",
   "dependencies": {
+    "@actions/cache": "^4.1.0",
     "@actions/core": "^3.0.1",
     "@actions/exec": "^3.0.0",
     "@actions/http-client": "^4.0.1",
